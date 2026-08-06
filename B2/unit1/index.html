@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>单词闯关消消乐 · 必修二 Unit 1</title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#FF9F1C',
+                        neutral: '#2B2D42',
+                        light: '#F7F9FC',
+                    },
+                    fontFamily: {
+                        sans: ['Comic Sans MS', 'Marker Felt', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'pop-in': 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        'match-pulse': 'matchPulse 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                        'shake': 'shake 0.5s ease-in-out',
+                        'fade-out': 'fadeOut 0.3s ease-in forwards',
+                        'pulse-glow': 'pulseGlow 1.5s infinite',
+                        'float': 'float 3s infinite ease-in-out',
+                        'fade-in': 'fadeIn 0.5s ease-in forwards',
+                        'slide-down': 'slideDown 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'minimize-pause': 'minimizePause 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+                    },
+                    keyframes: {
+                        popIn: {
+                            '0%': { transform: 'scale(0)', opacity: '0' },
+                            '70%': { transform: 'scale(1.1)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        matchPulse: {
+                            '0%': { transform: 'scale(1)', opacity: '1' },
+                            '50%': { transform: 'scale(1.3)', opacity: '1' },
+                            '100%': { transform: 'scale(0)', opacity: '0' },
+                        },
+                        fadeOut: {
+                            '0%': { opacity: '1' },
+                            '100%': { opacity: '0' },
+                        },
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-5px)' },
+                            '75%': { transform: 'translateX(5px)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': {
+                                transform: 'scale(1.25)',
+                                boxShadow: '0 0 0 0 rgba(255, 159, 28, 0.7)'
+                            },
+                            '50%': {
+                                transform: 'scale(1.3)',
+                                boxShadow: '0 0 0 10px rgba(255, 159, 28, 0)'
+                            }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideDown: {
+                            '0%': { transform: 'translateY(-20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(0)', opacity: '1' },
+                            '100%': { transform: 'translateY(-20px)', opacity: '0' },
+                        },
+                        minimizePause: {
+                            '0%': {
+                                transform: 'translate(-50%, -50%) scale(1)',
+                                top: '50%',
+                                left: '50%',
+                                width: '28rem',
+                                padding: '2rem'
+                            },
+                            '40%': {
+                                transform: 'translate(-50%, -50%) scale(0.85)',
+                                top: '50%',
+                                left: '50%',
+                                width: '24rem',
+                                padding: '1.5rem'
+                            },
+                            '100%': {
+                                transform: 'translate(0, 0) scale(0.8)',
+                                top: '1rem',
+                                right: '1rem',
+                                left: 'auto',
+                                width: '12rem',
+                                padding: '1rem'
+                            }
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bubble {
+                @apply rounded-full px-5 py-3 cursor-pointer transition-all duration-300 
+                       shadow-md hover:shadow-lg transform hover:scale-105;
+            }
+            .bubble-selected {
+                @apply animate-pulse-glow ring-4 ring-accent z-10;
+                transform: scale(1.25) !important;
+            }
+            .bubble-matched {
+                @apply animate-match-pulse pointer-events-none;
+            }
+            .bubble-error {
+                @apply animate-shake;
+            }
+            .phonetic {
+                @apply text-white/90 text-sm ml-2;
+            }
+            .confetti {
+                @apply absolute rounded-full opacity-0;
+            }
+            .text-outline {
+                text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+            }
+            .firework {
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 100;
+            }
+            .firework-trail {
+                position: absolute;
+                width: 3px;
+                height: 3px;
+                border-radius: 50%;
+                opacity: 0.6;
+                pointer-events: none;
+                z-index: 100;
+            }
+            .level-btn {
+                @apply w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 shadow-md;
+                cursor: pointer;
+            }
+            .level-btn.unlocked {
+                @apply bg-blue-500 text-white hover:bg-blue-600 hover:scale-105;
+            }
+            .level-btn.current {
+                @apply ring-4 ring-accent ring-opacity-50 bg-accent text-white scale-110;
+            }
+            .pause-minimized {
+                @apply animate-minimize-pause;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen font-sans text-neutral overflow-x-hidden">
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="text-center mb-8">
+            <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-accent mb-2">
+                <i class="fa fa-gamepad text-4xl mr-3"></i>单词闯关消消乐
+            </h1>
+            <div class="text-lg font-semibold text-gray-700 mb-2">必修二 · Unit 1（含词性/短语）</div>
+            <p class="text-gray-600 text-lg mb-6">点击英文单词和对应的中文意思进行匹配，消除所有泡泡！</p>
+            <p class="text-sm text-gray-500 mb-6">💡 从第5关起，每答对一组额外增加1秒</p>
+
+            <div class="flex flex-wrap justify-center gap-4 md:gap-8 mb-6">
+                <div class="bg-white rounded-xl shadow-lg px-6 py-3 flex items-center">
+                    <i class="fa fa-trophy text-accent text-2xl mr-2"></i>
+                    <div>
+                        <div class="text-gray-500 text-sm">得分</div>
+                        <div id="score" class="text-2xl font-bold">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg px-6 py-3 flex items-center">
+                    <i class="fa fa-signal text-accent text-2xl mr-2"></i>
+                    <div>
+                        <div class="text-gray-500 text-sm">关卡</div>
+                        <div id="level" class="text-2xl font-bold">1</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg px-6 py-3 flex items-center">
+                    <i class="fa fa-clock-o text-accent text-2xl mr-2"></i>
+                    <div>
+                        <div class="text-gray-500 text-sm">剩余时间</div>
+                        <div id="time-left" class="text-2xl font-bold">30</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-8 max-w-2xl mx-auto">
+                <div id="time-progress" class="h-full bg-gradient-to-r from-accent to-yellow-400 transition-all duration-1000"></div>
+            </div>
+        </header>
+
+        <div id="start-screen" class="text-center py-12">
+            <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md mx-auto transform transition-all duration-500 hover:scale-105">
+                <h2 class="text-2xl font-bold text-accent mb-4">准备开始游戏</h2>
+                <p class="text-gray-600 mb-6">点击英文单词，再点击对应的中文意思进行匹配，消除所有泡泡即可通关！</p>
+                <button id="start-btn" class="bg-accent hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center mx-auto">
+                    <i class="fa fa-play mr-2"></i> 开始游戏
+                </button>
+            </div>
+        </div>
+
+        <div id="game-area" class="hidden relative">
+            <div id="bubble-container" class="flex flex-wrap justify-center gap-4 md:gap-6 mb-8 min-h-[300px] items-center">
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mt-6">
+                <button id="restart-btn" class="bg-accent hover:bg-amber-500 text-white font-bold py-2 px-6 rounded-full transition-all duration-300 shadow-md hover:shadow-lg">
+                    <i class="fa fa-refresh mr-1"></i> 重新开始
+                </button>
+                <button id="level-select-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-full transition-all duration-300 shadow-md hover:shadow-lg">
+                    <i class="fa fa-flag-checkered mr-1"></i> 选择关卡
+                </button>
+                <button id="pause-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all duration-300 shadow-md hover:shadow-lg">
+                    <i class="fa fa-pause mr-1"></i> 暂停
+                </button>
+            </div>
+        </div>
+
+        <div id="game-over" class="hidden text-center py-12">
+            <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md mx-auto">
+                <div class="text-5xl mb-4 text-accent animate-bounce">
+                    <i class="fa fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-accent mb-2">游戏结束</h2>
+                <p class="text-gray-600 mb-2">你的最终成绩</p>
+                <div class="text-4xl font-bold text-accent mb-4" id="final-score">0</div>
+                <p class="text-gray-600 mb-6" id="final-level">已完成: 第1关</p>
+                <button id="play-again-btn" class="bg-accent hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center mx-auto">
+                    <i class="fa fa-refresh mr-2"></i> 再玩一次
+                </button>
+            </div>
+        </div>
+
+        <div id="clear-screen" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl mx-4 relative overflow-hidden">
+                <div class="absolute -top-10 -left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-20"></div>
+                <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-400 rounded-full opacity-20"></div>
+                <div class="relative z-10">
+                    <div class="text-6xl mb-6 text-center">
+                        <i class="fa fa-star text-yellow-400 animate-float"></i>
+                        <i class="fa fa-star text-purple-400 animate-float mx-4" style="animation-delay: 0.5s;"></i>
+                        <i class="fa fa-star text-pink-400 animate-float" style="animation-delay: 1s;"></i>
+                    </div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-accent mb-4 text-center animate-fade-in">恭喜通关！</h2>
+                    <p class="text-xl text-gray-700 mb-6 text-center animate-fade-in" style="animation-delay: 0.2s;">你已成功匹配所有词汇！</p>
+
+                    <div class="bg-gradient-to-r from-yellow-100 to-purple-100 rounded-xl p-6 mb-8 animate-fade-in" style="animation-delay: 0.4s;">
+                        <div class="flex justify-center items-center">
+                            <div class="text-center mr-6">
+                                <div class="text-2xl font-bold text-accent">得分</div>
+                                <div class="text-4xl font-bold" id="clear-score">0</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-accent">关卡</div>
+                                <div class="text-4xl font-bold" id="clear-level">1</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <button id="clear-play-again" class="bg-accent hover:bg-amber-500 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center">
+                            <i class="fa fa-refresh mr-2"></i> 再玩一次
+                        </button>
+                        <button id="clear-main-menu" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center">
+                            <i class="fa fa-home mr-2"></i> 返回主菜单
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pause-screen" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div id="pause-dialog" class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 relative">
+                <h2 class="text-2xl font-bold text-accent mb-6 text-center">游戏暂停</h2>
+                <button id="resume-btn" class="bg-accent hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full mb-3">
+                    <i class="fa fa-play mr-2"></i> 继续游戏
+                </button>
+                <button id="quit-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg w-full">
+                    <i class="fa fa-sign-out mr-2"></i> 退出游戏
+                </button>
+            </div>
+        </div>
+
+        <div id="level-select-screen" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl mx-4 w-full animate-slide-down">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-accent">选择关卡</h2>
+                    <button id="close-level-select" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold p-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+
+                <p class="text-gray-600 mb-6 text-center">点击任意关卡即可直接挑战（难度逐关递增）</p>
+
+                <div id="level-list" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-3 mb-6">
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4">
+                    <div class="flex items-center mb-2">
+                        <div class="level-btn current mr-3">5</div>
+                        <span class="text-gray-700">当前关卡（高亮）</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="level-btn unlocked mr-3">3</div>
+                        <span class="text-gray-700">所有关卡均可直接点击</span>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button id="close-level-select-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all duration-300 shadow-md hover:shadow-lg">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        //  📚 词库 · 必修二 Unit 1（含词性/短语，共77个词条）
+        // ================================================================
+        const wordLibrary = {
+            all: [
+                // ---- 单词 ----
+                { english: "heritage", phonetic: "/ˈherɪtɪdʒ/", chinese: "n. 遗产（指国家或社会长期形成的历史、传统和特色）" },
+                { english: "creatively", phonetic: "/kriˈeɪtɪvli/", chinese: "adv. 创造性地；有创造力地" },
+                { english: "creative", phonetic: "/kriˈeɪtɪv/", chinese: "adj. 创造性的；有创造力的；有创意的" },
+                { english: "temple", phonetic: "/ˈtempl/", chinese: "n. 庙；寺" },
+                { english: "relic", phonetic: "/ˈrelɪk/", chinese: "n. 遗物；遗迹" },
+                { english: "mount", phonetic: "/maʊnt/", chinese: "n. 山峰 vt. 爬上；骑上 vi. 爬；登上" },
+                { english: "former", phonetic: "/ˈfɔːmə(r)/", chinese: "adj. 以前的；（两者中）前者的" },
+                { english: "clue", phonetic: "/kluː/", chinese: "n. 线索；提示" },
+                { english: "preserve", phonetic: "/prɪˈzɜːv/", chinese: "vt. 保存；保护；维持 n. 保护区" },
+                { english: "promote", phonetic: "/prəˈməʊt/", chinese: "vt. 促进；提升；推销；晋级" },
+                { english: "cypress", phonetic: "/ˈsaɪprəs/", chinese: "n. 柏树" },
+                { english: "app", phonetic: "/æp/", chinese: "n. 应用程序；应用软件（application 的缩略形式）" },
+                { english: "application", phonetic: "/ˌæplɪˈkeɪʃn/", chinese: "n. 申请（表）；用途；运用；应用（程序）" },
+                // ---- 短语 P1~P2 ----
+                { english: "take part in", phonetic: "", chinese: "参与（某事）；参加（某活动）" },
+                { english: "give way to", phonetic: "", chinese: "让步；屈服" },
+                { english: "balance", phonetic: "/ˈbæləns/", chinese: "n. 平衡；均匀 vt. 使平衡" },
+                // ---- 短语 P3~P4 ----
+                { english: "keep a balance", phonetic: "", chinese: "保持平衡" },
+                { english: "lead to", phonetic: "", chinese: "导致" },
+                { english: "dam", phonetic: "/dæm/", chinese: "n. 水坝；拦河坝" },
+                { english: "proposal", phonetic: "/prəˈpəʊzl/", chinese: "n. 提议；建议" },
+                // ---- 短语 P5 ----
+                { english: "make a proposal", phonetic: "", chinese: "提出建议" },
+                { english: "protest", phonetic: "/ˈprəʊtest; /prəˈtest/", chinese: "n. 抗议 vi. & vt.（公开）反对；抗议" },
+                { english: "likely", phonetic: "/ˈlaɪkli/", chinese: "adj. 可能的 adv. 可能地" },
+                // ---- 短语 P6 ----
+                { english: "turn to", phonetic: "", chinese: "向……求助" },
+                { english: "committee", phonetic: "/kəˈmɪti/", chinese: "n. 委员会" },
+                { english: "establish", phonetic: "/ɪˈstæblɪʃ/", chinese: "vt. 建立；创立" },
+                { english: "limit", phonetic: "/ˈlɪmɪt/", chinese: "n. 限度；限制 vt. 限制；限定" },
+                { english: "prevent", phonetic: "/prɪˈvent/", chinese: "vt. 阻止；阻碍；阻挠" },
+                // ---- 短语 P7 ----
+                { english: "prevent ... from ...", phonetic: "", chinese: "阻止；不准" },
+                { english: "loss", phonetic: "/lɒs/", chinese: "n. 丧失；损失" },
+                { english: "contribution", phonetic: "/ˌkɒntrɪˈbjuːʃn/", chinese: "n. 捐款；贡献；捐赠" },
+                { english: "contribute", phonetic: "/kənˈtrɪbjuːt/", chinese: "vi. & vt. 捐款；捐助" },
+                { english: "department", phonetic: "/dɪˈpɑːtmənt/", chinese: "n. 部；司；科" },
+                { english: "fund", phonetic: "/fʌnd/", chinese: "n. 基金；专款" },
+                { english: "within", phonetic: "/wɪˈðɪn/", chinese: "prep. & adv. 在（某段时间、距离或范围）之内" },
+                { english: "investigate", phonetic: "/ɪnˈvestɪɡeɪt/", chinese: "vi. & vt. 调查；研究" },
+                { english: "issue", phonetic: "/ˈɪʃuː; BrE also ˈɪsjuː/", chinese: "n. 重要议题；争论的问题 vt. 宣布；公布" },
+                { english: "conduct", phonetic: "/ˈkɒndʌkt; /kənˈdʌkt/", chinese: "n. 行为；举止；管理方法 vt. 组织；安排；带领" },
+                { english: "document", phonetic: "/ˈdɒkjumənt/", chinese: "n. 文件；公文；（计算机）文档 vt. 记录；记载（详情）" },
+                { english: "donate", phonetic: "/dəʊˈneɪt/", chinese: "vt.（尤指向慈善机构）捐赠；赠送；献（血）" },
+                // ---- 短语 P8 ----
+                { english: "donate ... to ...", phonetic: "", chinese: "向……捐赠……" },
+                { english: "disappear", phonetic: "/ˌdɪsəˈpɪə(r)/", chinese: "vi. 消失；灭绝；消亡" },
+                { english: "attempt", phonetic: "/əˈtempt/", chinese: "n. & vt. 企图；试图；尝试" },
+                // ---- 短语 P9 ----
+                { english: "make sure", phonetic: "", chinese: "确保；设法保证" },
+                { english: "worthwhile", phonetic: "/ˌwɜːθˈwaɪl/", chinese: "adj. 值得做的；值得花时间的" },
+                { english: "download", phonetic: "/ˌdaʊnˈləʊd/", chinese: "vt. 下载 n. 已下载的数据资料" },
+                { english: "republic", phonetic: "/rɪˈpʌblɪk/", chinese: "n. 共和国" },
+                { english: "professional", phonetic: "/prəˈfeʃənl/", chinese: "adj. 专业的；职业的 n. 专业人员；职业选手" },
+                { english: "archaeologist", phonetic: "/ˌɑːkiˈɒlədʒɪst/", chinese: "n. 考古学家" },
+                { english: "UNESCO", phonetic: "/juːˈneskəʊ/", chinese: "abbr. 联合国教科文组织" },
+                { english: "entrance", phonetic: "/ˈentrəns/", chinese: "n. 入口；进入" },
+                { english: "pyramid", phonetic: "/ˈpɪrəmɪd/", chinese: "n.（古埃及的）金字塔；棱锥体" },
+                { english: "process", phonetic: "/ˈprəʊses/", chinese: "n. 过程；进程；步骤 vt. 处理；加工" },
+                { english: "overseas", phonetic: "/ˌəʊvəˈsiːz/", chinese: "adj. 海外的 adv. 在海外" },
+                { english: "exit", phonetic: "/ˈeksɪt/", chinese: "n. 出口；通道 vi. & vt. 出去；离去" },
+                { english: "sheet", phonetic: "/ʃiːt/", chinese: "n. 一张（纸）；床单；被单" },
+                { english: "parade", phonetic: "/pəˈreɪd/", chinese: "n. 游行；检阅 vi. 游行庆祝；游行示威" },
+                { english: "mirror", phonetic: "/ˈmɪrə(r)/", chinese: "n. 镜子" },
+                { english: "roof", phonetic: "/ruːf/", chinese: "n. 顶部；屋顶" },
+                { english: "dragon", phonetic: "/ˈdræɡən/", chinese: "n. 龙" },
+                { english: "forgive", phonetic: "/fəˈɡɪv/", chinese: "vt. & vi. (forgave, forgiven) 原谅；宽恕 vt. 对不起；请原谅" },
+                { english: "digital", phonetic: "/ˈdɪdʒɪtl/", chinese: "adj. 数码的；数字显示的" },
+                { english: "image", phonetic: "/ˈɪmɪdʒ/", chinese: "n. 形象；印象" },
+                { english: "cave", phonetic: "/keɪv/", chinese: "n. 山洞；洞穴" },
+                { english: "throughout", phonetic: "/θruːˈaʊt/", chinese: "prep. 各处；遍及；自始至终" },
+                { english: "quality", phonetic: "/ˈkwɒləti/", chinese: "n. 质量；品质；素质；特征 adj. 优质的；高质量的" },
+                // ---- 短语 P10 ----
+                { english: "all over the world", phonetic: "", chinese: "在世界各地" },
+                { english: "tradition", phonetic: "/trəˈdɪʃn/", chinese: "n. 传统；传统的信仰或风俗" },
+                { english: "further", phonetic: "/ˈfɜːðə(r)/", chinese: "adv.（far 的比较级）更远；进一步" },
+                { english: "historic", phonetic: "/hɪˈstɒrɪk/", chinese: "adj. 历史上著名（或重要）的；有史时期的" },
+                { english: "opinion", phonetic: "/əˈpɪnjən/", chinese: "n. 意见；想法；看法" },
+                { english: "quote", phonetic: "/kwəʊt/", chinese: "vt. 引用" },
+                { english: "paraphrase", phonetic: "/ˈpærəfreɪz/", chinese: "n., vi. & vt.（用更容易理解的文字）解释" },
+                { english: "comparison", phonetic: "/kəmˈpærɪsn/", chinese: "n. 比较；相比" },
+                { english: "contrast", phonetic: "/ˈkɒntrɑːst; /kənˈtrɑːst/", chinese: "n. 对比；对照 vt. 对比；对照" },
+                { english: "identify", phonetic: "/aɪˈdentɪfaɪ/", chinese: "vt. 确认；认出；找到" },
+                { english: "forever", phonetic: "/fərˈevə(r)/", chinese: "adv. 永远；长久地" }
+            ]
+        };
+
+        // ================================================================
+        //  难度递增：动态分配每关词条数（4~10，逐步递增）
+        // ================================================================
+        function generateLevelWordCounts(totalWords, min = 4, max = 10) {
+            let n = Math.ceil(totalWords / ((min + max) / 2));
+            n = Math.max(n, 1);
+            let counts = [];
+            let sum = 0;
+            for (let i = 1; i <= n; i++) {
+                let count = Math.round(min + (i - 1) * (max - min) / (n - 1));
+                count = Math.min(max, Math.max(min, count));
+                counts.push(count);
+                sum += count;
+            }
+            let diff = totalWords - sum;
+            for (let i = n - 1; i >= 0 && diff !== 0; i--) {
+                if (diff > 0) {
+                    let add = Math.min(diff, max - counts[i]);
+                    counts[i] += add;
+                    diff -= add;
+                } else {
+                    let sub = Math.min(-diff, counts[i] - min);
+                    counts[i] -= sub;
+                    diff += sub;
+                }
+            }
+            for (let i = 1; i < counts.length; i++) {
+                if (counts[i] < counts[i - 1]) {
+                    let diff2 = counts[i - 1] - counts[i];
+                    for (let j = i; j < counts.length; j++) {
+                        if (diff2 <= 0) break;
+                        let can = Math.min(diff2, counts[j] - min);
+                        counts[j] -= can;
+                        diff2 -= can;
+                    }
+                    counts[i] += (counts[i - 1] - counts[i]);
+                }
+            }
+            let sum2 = counts.reduce((a, b) => a + b, 0);
+            if (sum2 !== totalWords) {
+                let lastIdx = counts.length - 1;
+                let diff3 = totalWords - sum2;
+                if (diff3 > 0) {
+                    let add = Math.min(diff3, max - counts[lastIdx]);
+                    counts[lastIdx] += add;
+                } else {
+                    let sub = Math.min(-diff3, counts[lastIdx] - min);
+                    counts[lastIdx] -= sub;
+                }
+            }
+            return counts;
+        }
+
+        // ================================================================
+        //  音频管理器（完整保留）
+        // ================================================================
+        const audioManager = {
+            audioContext: null,
+            initialized: false,
+
+            init: function() {
+                if (!this.audioContext) {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        this.audioContext = new AudioContext();
+                        this.initialized = true;
+                        console.log('Web Audio API 初始化成功');
+                    } catch (error) {
+                        console.error('Web Audio API 不支持或初始化失败:', error);
+                    }
+                }
+            },
+
+            ensureContextRunning: function() {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            },
+
+            playCorrectSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const masterGain = this.audioContext.createGain();
+                    masterGain.connect(this.audioContext.destination);
+                    masterGain.gain.setValueAtTime(0.7, this.audioContext.currentTime);
+
+                    const oscillator1 = this.audioContext.createOscillator();
+                    const oscillator2 = this.audioContext.createOscillator();
+                    oscillator1.type = 'sine';
+                    oscillator2.type = 'triangle';
+                    oscillator1.frequency.setValueAtTime(523.25, this.audioContext.currentTime);
+                    oscillator2.frequency.setValueAtTime(659.25, this.audioContext.currentTime);
+
+                    const gainNode1 = this.audioContext.createGain();
+                    const gainNode2 = this.audioContext.createGain();
+                    gainNode1.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gainNode1.gain.linearRampToValueAtTime(0.5, this.audioContext.currentTime + 0.05);
+                    gainNode2.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gainNode2.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
+                    gainNode1.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+                    gainNode2.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+
+                    oscillator1.connect(gainNode1).connect(masterGain);
+                    oscillator2.connect(gainNode2).connect(masterGain);
+                    oscillator1.start();
+                    oscillator2.start();
+                    oscillator1.stop(this.audioContext.currentTime + 0.5);
+                    oscillator2.stop(this.audioContext.currentTime + 0.5);
+
+                    setTimeout(() => { this.playHighPing(); }, 100);
+                } catch (error) {
+                    console.error('播放正确音效失败:', error);
+                }
+            },
+
+            playHighPing: function() {
+                if (!this.audioContext) return;
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(1046.50, this.audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
+                oscillator.connect(gainNode).connect(this.audioContext.destination);
+                oscillator.start();
+                oscillator.stop(this.audioContext.currentTime + 0.15);
+            },
+
+            playWrongSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
+                    oscillator.connect(gainNode).connect(this.audioContext.destination);
+                    oscillator.start();
+                    oscillator.stop(this.audioContext.currentTime + 0.4);
+                } catch (error) {
+                    console.error('播放错误音效失败:', error);
+                }
+            },
+
+            playClickSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
+                    oscillator.connect(gainNode).connect(this.audioContext.destination);
+                    oscillator.start();
+                    oscillator.stop(this.audioContext.currentTime + 0.1);
+                } catch (error) {
+                    console.error('播放点击音效失败:', error);
+                }
+            },
+
+            playLevelUpSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const now = this.audioContext.currentTime;
+                    const oscillator1 = this.audioContext.createOscillator();
+                    const oscillator2 = this.audioContext.createOscillator();
+                    const gainNode1 = this.audioContext.createGain();
+                    const gainNode2 = this.audioContext.createGain();
+                    oscillator1.type = 'sine';
+                    oscillator1.frequency.setValueAtTime(523.25, now);
+                    oscillator1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.5);
+                    oscillator2.type = 'triangle';
+                    oscillator2.frequency.setValueAtTime(659.25, now);
+                    oscillator2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.5);
+                    gainNode1.gain.setValueAtTime(0.1, now);
+                    gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.1);
+                    gainNode1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    gainNode2.gain.setValueAtTime(0.05, now);
+                    gainNode2.gain.linearRampToValueAtTime(0.2, now + 0.1);
+                    gainNode2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    oscillator1.connect(gainNode1).connect(this.audioContext.destination);
+                    oscillator2.connect(gainNode2).connect(this.audioContext.destination);
+                    oscillator1.start();
+                    oscillator2.start();
+                    oscillator1.stop(now + 0.6);
+                    oscillator2.stop(now + 0.6);
+                } catch (error) {
+                    console.error('播放升级音效失败:', error);
+                }
+            },
+
+            playStartSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const now = this.audioContext.currentTime;
+                    for (let i = 0; i < 3; i++) {
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        oscillator.type = i === 0 ? 'sine' : (i === 1 ? 'triangle' : 'sawtooth');
+                        const baseFreq = 400 + i * 200;
+                        oscillator.frequency.setValueAtTime(baseFreq, now + i * 0.05);
+                        oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 2, now + i * 0.05 + 0.3);
+                        gainNode.gain.setValueAtTime(0, now + i * 0.05);
+                        gainNode.gain.linearRampToValueAtTime(0.2 / (i + 1), now + i * 0.05 + 0.05);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.5);
+                        oscillator.connect(gainNode).connect(this.audioContext.destination);
+                        oscillator.start(now + i * 0.05);
+                        oscillator.stop(now + i * 0.05 + 0.5);
+                    }
+                } catch (error) {
+                    console.error('播放开始音效失败:', error);
+                }
+            },
+
+            playGameOverSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const now = this.audioContext.currentTime;
+                    for (let i = 0; i < 3; i++) {
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        oscillator.type = 'sawtooth';
+                        const startFreq = 600 - i * 100;
+                        const endFreq = 200 - i * 50;
+                        oscillator.frequency.setValueAtTime(startFreq, now + i * 0.1);
+                        oscillator.frequency.exponentialRampToValueAtTime(endFreq, now + i * 0.1 + 0.5);
+                        gainNode.gain.setValueAtTime(0.2, now + i * 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.5);
+                        oscillator.connect(gainNode).connect(this.audioContext.destination);
+                        oscillator.start(now + i * 0.1);
+                        oscillator.stop(now + i * 0.1 + 0.5);
+                    }
+                } catch (error) {
+                    console.error('播放结束音效失败:', error);
+                }
+            },
+
+            playClearSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const now = this.audioContext.currentTime;
+                    const notes = [
+                        { freq: 523.25, time: 0.0, duration: 0.15 },
+                        { freq: 659.25, time: 0.1, duration: 0.15 },
+                        { freq: 783.99, time: 0.2, duration: 0.15 },
+                        { freq: 1046.50, time: 0.3, duration: 0.3 },
+                    ];
+                    notes.forEach((note, index) => {
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        oscillator.type = index === 3 ? 'sine' : 'triangle';
+                        oscillator.frequency.setValueAtTime(note.freq, now + note.time);
+                        gainNode.gain.setValueAtTime(0, now + note.time);
+                        gainNode.gain.linearRampToValueAtTime(0.3, now + note.time + 0.02);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.duration);
+                        oscillator.connect(gainNode).connect(this.audioContext.destination);
+                        oscillator.start(now + note.time);
+                        oscillator.stop(now + note.time + note.duration);
+                    });
+                    setTimeout(() => {
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(1567.98, this.audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+                        oscillator.connect(gainNode).connect(this.audioContext.destination);
+                        oscillator.start();
+                        oscillator.stop(this.audioContext.currentTime + 0.5);
+                    }, 700);
+                } catch (error) {
+                    console.error('播放通关音效失败:', error);
+                }
+            },
+
+            playSelectLevelSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const now = this.audioContext.currentTime;
+                    const notes = [
+                        { freq: 784.00, time: 0.0, duration: 0.1 },
+                        { freq: 880.00, time: 0.1, duration: 0.1 },
+                        { freq: 987.77, time: 0.2, duration: 0.2 },
+                    ];
+                    notes.forEach((note, index) => {
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        oscillator.type = index === 2 ? 'sine' : 'triangle';
+                        oscillator.frequency.setValueAtTime(note.freq, now + note.time);
+                        gainNode.gain.setValueAtTime(0, now + note.time);
+                        gainNode.gain.linearRampToValueAtTime(0.25, now + note.time + 0.02);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.duration);
+                        oscillator.connect(gainNode).connect(this.audioContext.destination);
+                        oscillator.start(now + note.time);
+                        oscillator.stop(now + note.time + note.duration);
+                    });
+                } catch (error) {
+                    console.error('播放选关音效失败:', error);
+                }
+            },
+
+            playJumpSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const now = this.audioContext.currentTime;
+                    const oscillator1 = this.audioContext.createOscillator();
+                    const oscillator2 = this.audioContext.createOscillator();
+                    const gainNode1 = this.audioContext.createGain();
+                    const gainNode2 = this.audioContext.createGain();
+                    oscillator1.type = 'sawtooth';
+                    oscillator2.type = 'triangle';
+                    oscillator1.frequency.setValueAtTime(300, now);
+                    oscillator1.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+                    oscillator2.frequency.setValueAtTime(450, now);
+                    oscillator2.frequency.exponentialRampToValueAtTime(1800, now + 0.2);
+                    gainNode1.gain.setValueAtTime(0.1, now);
+                    gainNode1.gain.linearRampToValueAtTime(0.3, now + 0.05);
+                    gainNode1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    gainNode2.gain.setValueAtTime(0.05, now);
+                    gainNode2.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                    gainNode2.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    oscillator1.connect(gainNode1).connect(this.audioContext.destination);
+                    oscillator2.connect(gainNode2).connect(this.audioContext.destination);
+                    oscillator1.start();
+                    oscillator2.start();
+                    oscillator1.stop(now + 0.25);
+                    oscillator2.stop(now + 0.25);
+                } catch (error) {
+                    console.error('播放跳转音效失败:', error);
+                }
+            },
+
+            playPauseSound: function() {
+                this.ensureContextRunning();
+                if (!this.audioContext) return;
+                try {
+                    const now = this.audioContext.currentTime;
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(600, now);
+                    gainNode.gain.setValueAtTime(0, now);
+                    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    oscillator.connect(gainNode).connect(this.audioContext.destination);
+                    oscillator.start();
+                    oscillator.stop(now + 0.1);
+                } catch (error) {
+                    console.error('播放暂停音效失败:', error);
+                }
+            }
+        };
+
+        // ================================================================
+        //  语音管理器（完整保留）
+        // ================================================================
+        const speechManager = {
+            playEnglish: function(word) {
+                return new Promise((resolve) => {
+                    const audio = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`);
+                    audio.volume = 0.7;
+                    audio.play().then(resolve).catch(error => {
+                        console.log('有道API播放失败，尝试浏览器语音合成:', error);
+                        this.speakNative(word, 'en');
+                        resolve();
+                    });
+                });
+            },
+
+            speakNative: function(text, lang = 'zh-CN') {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = lang;
+                    utterance.rate = 0.8;
+                    utterance.pitch = 1;
+                    utterance.volume = 0.7;
+                    setTimeout(() => { window.speechSynthesis.speak(utterance); }, 50);
+                } else {
+                    console.warn('浏览器不支持语音合成功能');
+                }
+            },
+
+            playChinese: function(text) {
+                this.speakNative(text, 'zh-CN');
+            },
+
+            playBubbleSpeech: function(bubbleElement) {
+                const type = bubbleElement.dataset.type;
+                const content = bubbleElement.dataset.content;
+                if (!content) return;
+                audioManager.playClickSound();
+                if (type === 'english') {
+                    this.playEnglish(content);
+                }
+            }
+        };
+
+        // ================================================================
+        //  游戏状态
+        // ================================================================
+        const totalWords = wordLibrary.all.length;
+        const levelWordCounts = generateLevelWordCounts(totalWords, 4, 10);
+        const TOTAL_LEVELS = levelWordCounts.length;
+
+        let gameState = {
+            score: 0,
+            level: 1,
+            timeLeft: 30,
+            timer: null,
+            isPaused: false,
+            isGameOver: false,
+            isCleared: false,
+            selectedBubble: null,
+            matchedPairs: 0,
+            totalPairs: 0,
+            bubbles: [],
+            previousWords: { all: [] },
+            totalWordCount: totalWords,
+            usedWordCount: 0,
+            fireworkInterval: null,
+            totalLevels: TOTAL_LEVELS,
+            isLevelSelectPause: false,
+            currentWordIndex: 0
+        };
+
+        // ================================================================
+        //  DOM 引用
+        // ================================================================
+        const elements = {
+            startScreen: document.getElementById('start-screen'),
+            gameArea: document.getElementById('game-area'),
+            gameOver: document.getElementById('game-over'),
+            clearScreen: document.getElementById('clear-screen'),
+            pauseScreen: document.getElementById('pause-screen'),
+            pauseDialog: document.getElementById('pause-dialog'),
+            levelSelectScreen: document.getElementById('level-select-screen'),
+            bubbleContainer: document.getElementById('bubble-container'),
+            levelList: document.getElementById('level-list'),
+            scoreDisplay: document.getElementById('score'),
+            levelDisplay: document.getElementById('level'),
+            timeLeftDisplay: document.getElementById('time-left'),
+            timeProgress: document.getElementById('time-progress'),
+            finalScoreDisplay: document.getElementById('final-score'),
+            finalLevelDisplay: document.getElementById('final-level'),
+            clearScoreDisplay: document.getElementById('clear-score'),
+            clearLevelDisplay: document.getElementById('clear-level'),
+            startBtn: document.getElementById('start-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            levelSelectBtn: document.getElementById('level-select-btn'),
+            closeLevelSelect: document.getElementById('close-level-select'),
+            closeLevelSelectBtn: document.getElementById('close-level-select-btn'),
+            pauseBtn: document.getElementById('pause-btn'),
+            resumeBtn: document.getElementById('resume-btn'),
+            quitBtn: document.getElementById('quit-btn'),
+            playAgainBtn: document.getElementById('play-again-btn'),
+            clearPlayAgain: document.getElementById('clear-play-again'),
+            clearMainMenu: document.getElementById('clear-main-menu')
+        };
+
+        // ================================================================
+        //  辅助函数
+        // ================================================================
+        function getPairCountForLevel(level) {
+            return levelWordCounts[level - 1] || 0;
+        }
+
+        function getStartIndexForLevel(level) {
+            let idx = 0;
+            for (let i = 0; i < level - 1; i++) {
+                idx += levelWordCounts[i];
+            }
+            return idx;
+        }
+
+        // ================================================================
+        //  ⏱️ 自定义关卡时间（可手动调整）
+        // ================================================================
+        const customLevelTimes = [
+            // 例如：35, 32, 30, 28, 26, 24, 22, 20, 18, 16
+            // 当前共有 10 关，可据此填写
+        ];
+
+        function getTimeForLevel(level) {
+// ===== 插入下面这行 =====
+if (level === 11) return 35;   // 单独指定第11关为35秒
+// ===== 插入结束 =====
+            if (customLevelTimes && customLevelTimes.length >= level) {
+                return customLevelTimes[level - 1];
+            }
+            const total = gameState.totalLevels;
+            if (total <= 5) return 30;
+            if (level <= Math.ceil(total * 0.3)) return 35;
+            if (level <= Math.ceil(total * 0.6)) return 30;
+            if (level <= Math.ceil(total * 0.85)) return 25;
+            return 20;
+        }
+
+        // ================================================================
+        //  游戏核心逻辑
+        // ================================================================
+
+        elements.startBtn.addEventListener('click', startGame);
+        elements.restartBtn.addEventListener('click', restartGame);
+        elements.levelSelectBtn.addEventListener('click', showLevelSelect);
+        elements.closeLevelSelect.addEventListener('click', hideLevelSelect);
+        elements.closeLevelSelectBtn.addEventListener('click', hideLevelSelect);
+        elements.pauseBtn.addEventListener('click', pauseGame);
+        elements.resumeBtn.addEventListener('click', resumeGame);
+        elements.quitBtn.addEventListener('click', quitGame);
+        elements.playAgainBtn.addEventListener('click', restartGame);
+        elements.clearPlayAgain.addEventListener('click', restartGame);
+        elements.clearMainMenu.addEventListener('click', quitGame);
+
+        function showLevelSelect() {
+            gameState.isLevelSelectPause = true;
+            pauseGame();
+            gameState.isLevelSelectPause = false;
+            audioManager.playSelectLevelSound();
+            elements.levelSelectScreen.classList.remove('hidden');
+            elements.levelSelectScreen.classList.remove('animate-slide-up');
+            elements.levelSelectScreen.classList.add('animate-slide-down');
+            generateLevelButtons();
+        }
+
+        function hideLevelSelect() {
+            audioManager.playClickSound();
+            elements.levelSelectScreen.classList.remove('animate-slide-down');
+            elements.levelSelectScreen.classList.add('animate-slide-up');
+            setTimeout(() => {
+                elements.levelSelectScreen.classList.add('hidden');
+                elements.levelSelectScreen.classList.remove('animate-slide-up');
+                if (!gameState.isGameOver && !gameState.isCleared) {
+                    resumeGame();
+                }
+            }, 300);
+        }
+
+        function generateLevelButtons() {
+            elements.levelList.innerHTML = '';
+            for (let i = 1; i <= gameState.totalLevels; i++) {
+                const levelBtn = document.createElement('button');
+                const isCurrent = i === gameState.level;
+                levelBtn.className = `level-btn unlocked ${isCurrent ? 'current' : ''}`;
+                levelBtn.textContent = i;
+                levelBtn.dataset.level = i;
+                levelBtn.addEventListener('click', function() {
+                    const level = parseInt(this.dataset.level);
+                    selectLevel(level);
+                });
+                levelBtn.addEventListener('mouseenter', function() {
+                    if (parseInt(this.dataset.level) !== gameState.level) {
+                        this.classList.add('scale-105');
+                    }
+                });
+                levelBtn.addEventListener('mouseleave', function() {
+                    this.classList.remove('scale-105');
+                });
+                elements.levelList.appendChild(levelBtn);
+            }
+        }
+
+        function selectLevel(level) {
+            if (level === gameState.level) {
+                hideLevelSelect();
+                return;
+            }
+
+            elements.levelSelectScreen.classList.add('hidden');
+            elements.levelSelectScreen.classList.remove('animate-slide-down', 'animate-slide-up');
+
+            if (gameState.timer) clearInterval(gameState.timer);
+
+            gameState.score = 0;
+            gameState.level = level;
+            gameState.timeLeft = getTimeForLevel(level);
+            gameState.matchedPairs = 0;
+            gameState.selectedBubble = null;
+            gameState.isPaused = false;
+            gameState.isGameOver = false;
+            gameState.isCleared = false;
+            gameState.previousWords = { all: [] };
+            gameState.currentWordIndex = getStartIndexForLevel(level);
+
+            updateScore();
+            updateLevel();
+            updateTimeLeft();
+            elements.timeProgress.style.width = '100%';
+
+            document.querySelectorAll('.bubble-selected').forEach(b => b.classList.remove('bubble-selected'));
+
+            generateLevel();
+            startTimer();
+
+            elements.levelDisplay.classList.add('scale-125', 'text-accent');
+            setTimeout(() => {
+                elements.levelDisplay.classList.remove('scale-125', 'text-accent');
+            }, 300);
+
+            elements.gameArea.classList.remove('hidden');
+            elements.startScreen.classList.add('hidden');
+            elements.gameOver.classList.add('hidden');
+            elements.clearScreen.classList.add('hidden');
+            elements.pauseScreen.classList.add('hidden');
+        }
+
+        function startGame() {
+            audioManager.init();
+            elements.startScreen.classList.add('hidden');
+            elements.gameArea.classList.remove('hidden');
+            elements.clearScreen.classList.add('hidden');
+            audioManager.playStartSound();
+            resetGameState();
+            generateLevel();
+            startTimer();
+        }
+
+        function resetGameState() {
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.timeLeft = getTimeForLevel(1);
+            gameState.matchedPairs = 0;
+            gameState.selectedBubble = null;
+            gameState.isGameOver = false;
+            gameState.isCleared = false;
+            gameState.usedWordCount = 0;
+            gameState.isLevelSelectPause = false;
+            gameState.previousWords = { all: [] };
+            gameState.currentWordIndex = getStartIndexForLevel(1);
+
+            if (gameState.fireworkInterval) {
+                clearInterval(gameState.fireworkInterval);
+                gameState.fireworkInterval = null;
+            }
+            document.querySelectorAll('.firework, .firework-trail').forEach(el => el.remove());
+
+            if (elements.pauseDialog) {
+                elements.pauseDialog.style.cssText = '';
+                elements.pauseDialog.classList.remove('pause-minimized');
+            }
+
+            updateScore();
+            updateLevel();
+            updateTimeLeft();
+            elements.timeProgress.style.width = '100%';
+            if (gameState.timer) clearInterval(gameState.timer);
+        }
+
+        function restartGame() {
+            elements.gameOver.classList.add('hidden');
+            elements.clearScreen.classList.add('hidden');
+            elements.pauseScreen.classList.add('hidden');
+            elements.gameArea.classList.remove('hidden');
+            audioManager.playStartSound();
+            resetGameState();
+            generateLevel();
+            startTimer();
+        }
+
+        function pauseGame() {
+            if (gameState.isGameOver) return;
+            if (!gameState.isLevelSelectPause) {
+                audioManager.playPauseSound();
+            }
+            gameState.isPaused = true;
+            clearInterval(gameState.timer);
+            elements.pauseScreen.classList.remove('hidden');
+            elements.pauseDialog.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 28rem;
+                padding: 2rem;
+                z-index: 100;
+                border-radius: 1rem;
+            `;
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    elements.pauseDialog.classList.add('pause-minimized');
+                });
+            });
+        }
+
+        function resumeGame() {
+            audioManager.playClickSound();
+            elements.pauseDialog.style.cssText = '';
+            elements.pauseDialog.classList.remove('pause-minimized');
+            const h2 = elements.pauseDialog.querySelector('h2');
+            const buttons = elements.pauseDialog.querySelectorAll('button');
+            if (h2) {
+                h2.classList.remove('text-lg', 'mb-4');
+                h2.classList.add('text-2xl', 'mb-6');
+            }
+            buttons.forEach(btn => {
+                btn.classList.remove('py-2', 'px-4', 'text-sm');
+                btn.classList.add('py-3', 'px-8');
+            });
+            gameState.isPaused = false;
+            elements.pauseScreen.classList.add('hidden');
+            startTimer();
+        }
+
+        function quitGame() {
+            audioManager.playClickSound();
+            if (elements.pauseDialog) {
+                elements.pauseDialog.style.cssText = '';
+                elements.pauseDialog.classList.remove('pause-minimized');
+                const h2 = elements.pauseDialog.querySelector('h2');
+                const buttons = elements.pauseDialog.querySelectorAll('button');
+                if (h2) {
+                    h2.classList.remove('text-lg', 'mb-4');
+                    h2.classList.add('text-2xl', 'mb-6');
+                }
+                buttons.forEach(btn => {
+                    btn.classList.remove('py-2', 'px-4', 'text-sm');
+                    btn.classList.add('py-3', 'px-8');
+                });
+            }
+            elements.pauseScreen.classList.add('hidden');
+            elements.clearScreen.classList.add('hidden');
+            elements.gameArea.classList.add('hidden');
+            elements.startScreen.classList.remove('hidden');
+            clearInterval(gameState.timer);
+        }
+
+        // ================================================================
+        //  关卡生成
+        // ================================================================
+
+        function generateLevel() {
+            elements.bubbleContainer.innerHTML = '';
+            gameState.bubbles = [];
+            gameState.matchedPairs = 0;
+
+            const pairCount = getPairCountForLevel(gameState.level);
+            gameState.totalPairs = pairCount;
+
+            if (pairCount === 0 || gameState.currentWordIndex >= totalWords) {
+                clearGame();
+                return;
+            }
+
+            const words = wordLibrary.all.slice(gameState.currentWordIndex, gameState.currentWordIndex + pairCount);
+            if (words.length < pairCount) {
+                clearGame();
+                return;
+            }
+
+            for (let i = gameState.currentWordIndex; i < gameState.currentWordIndex + pairCount; i++) {
+                gameState.previousWords.all.push(i);
+            }
+
+            const allBubbles = [];
+
+            words.forEach((wordPair, index) => {
+                const englishHue = 180 + Math.floor(Math.random() * 40);
+                const englishSaturation = 60 + Math.floor(Math.random() * 20);
+                const englishLightness = 65 + Math.floor(Math.random() * 10);
+                const englishColor = `hsl(${englishHue}, ${englishSaturation}%, ${englishLightness}%)`;
+
+                let chineseHue;
+                if (Math.random() > 0.5) {
+                    chineseHue = 20 + Math.floor(Math.random() * 40);
+                } else {
+                    chineseHue = 320 + Math.floor(Math.random() * 40);
+                }
+                const chineseSaturation = 60 + Math.floor(Math.random() * 20);
+                const chineseLightness = 65 + Math.floor(Math.random() * 10);
+                const chineseColor = `hsl(${chineseHue}, ${chineseSaturation}%, ${chineseLightness}%)`;
+
+                const pairId = gameState.currentWordIndex + index;
+
+                allBubbles.push({
+                    id: `bubble-english-${pairId}`,
+                    type: 'english',
+                    content: wordPair.english,
+                    phonetic: wordPair.phonetic || '',
+                    pairId: pairId,
+                    matched: false,
+                    color: englishColor
+                });
+
+                allBubbles.push({
+                    id: `bubble-chinese-${pairId}`,
+                    type: 'chinese',
+                    content: wordPair.chinese,
+                    pairId: pairId,
+                    matched: false,
+                    color: chineseColor
+                });
+            });
+
+            shuffleArray(allBubbles);
+            gameState.bubbles = allBubbles;
+
+            allBubbles.forEach((bubble, index) => {
+                const bubbleElement = createBubbleElement(bubble);
+                setTimeout(() => {
+                    elements.bubbleContainer.appendChild(bubbleElement);
+                }, index * 50);
+            });
+        }
+
+        function createBubbleElement(bubble) {
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.id = bubble.id;
+            bubbleDiv.className = `animate-pop-in bubble`;
+            bubbleDiv.dataset.type = bubble.type;
+            bubbleDiv.dataset.pairId = bubble.pairId;
+            bubbleDiv.dataset.content = bubble.content;
+            bubbleDiv.style.backgroundColor = bubble.color;
+            bubbleDiv.style.color = 'white';
+            bubbleDiv.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
+            bubbleDiv.style.fontWeight = 'bold';
+            bubbleDiv.style.boxShadow = `0 5px 15px rgba(0, 0, 0, 0.15), inset 0 -2px 4px -1px rgba(0, 0, 0, 0.1)`;
+
+            if (bubble.type === 'english') {
+                bubbleDiv.innerHTML = `
+                    <span>${bubble.content}</span>
+                    ${bubble.phonetic ? `<span class="phonetic">${bubble.phonetic}</span>` : ''}
+                `;
+            } else {
+                bubbleDiv.textContent = bubble.content;
+            }
+
+            bubbleDiv.addEventListener('click', () => selectBubble(bubbleDiv));
+            return bubbleDiv;
+        }
+
+        // ================================================================
+        //  匹配逻辑（含答对加时规则：第5关起+1秒）
+        // ================================================================
+
+        function selectBubble(bubbleElement) {
+            if (gameState.isPaused || gameState.isGameOver ||
+                bubbleElement.classList.contains('matched') ||
+                (gameState.selectedBubble && gameState.selectedBubble.id === bubbleElement.id)) {
+                return;
+            }
+
+            speechManager.playBubbleSpeech(bubbleElement);
+
+            if (gameState.selectedBubble && gameState.selectedBubble.dataset.type === bubbleElement.dataset.type) {
+                gameState.selectedBubble.classList.remove('bubble-selected');
+            }
+
+            bubbleElement.classList.add('bubble-selected');
+            gameState.selectedBubble = bubbleElement;
+
+            const selectedBubbles = document.querySelectorAll('.bubble-selected');
+            if (selectedBubbles.length === 2) {
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            const selectedBubbles = document.querySelectorAll('.bubble-selected');
+            if (selectedBubbles.length !== 2) return;
+
+            const [bubble1, bubble2] = selectedBubbles;
+
+            const isDifferentTypes = bubble1.dataset.type !== bubble2.dataset.type;
+            const isSamePair = bubble1.dataset.pairId === bubble2.dataset.pairId;
+
+            if (isDifferentTypes && isSamePair) {
+                audioManager.playCorrectSound();
+
+                const rect1 = bubble1.getBoundingClientRect();
+                const containerRect = elements.bubbleContainer.getBoundingClientRect();
+                const x1 = rect1.left - containerRect.left + rect1.width / 2;
+                const y1 = rect1.top - containerRect.top + rect1.height / 2;
+
+                const rect2 = bubble2.getBoundingClientRect();
+                const x2 = rect2.left - containerRect.left + rect2.width / 2;
+                const y2 = rect2.top - containerRect.top + rect2.height / 2;
+
+                createConfetti(x1, y1, bubble1.style.backgroundColor);
+                createConfetti(x2, y2, bubble2.style.backgroundColor);
+
+                bubble1.classList.add('bubble-matched', 'matched');
+                bubble2.classList.add('bubble-matched', 'matched');
+
+                const basePoints = 10;
+                const timeBonus = Math.floor(gameState.timeLeft / 5);
+                gameState.score += basePoints + timeBonus;
+                updateScore();
+
+                // ========== 第5关起答对加1秒 ==========
+                if (gameState.level >= 5) {
+                    gameState.timeLeft += 1;
+                    updateTimeLeft();
+                    const totalTime = getTimeForLevel(gameState.level);
+                    let percent = Math.min((gameState.timeLeft / totalTime) * 100, 100);
+                    elements.timeProgress.style.width = `${percent}%`;
+                }
+
+                gameState.matchedPairs++;
+
+                bubble1.classList.remove('bubble-selected');
+                bubble2.classList.remove('bubble-selected');
+
+                if (gameState.matchedPairs === gameState.totalPairs) {
+                    const nextStart = gameState.currentWordIndex + getPairCountForLevel(gameState.level);
+                    if (nextStart >= totalWords) {
+                        clearGame();
+                    } else {
+                        nextLevel();
+                    }
+                }
+            } else {
+                audioManager.playWrongSound();
+
+                bubble1.classList.add('bubble-error');
+                bubble2.classList.add('bubble-error');
+
+                gameState.score = Math.max(0, gameState.score - 2);
+                updateScore();
+
+                setTimeout(() => {
+                    bubble1.classList.remove('bubble-selected', 'bubble-error');
+                    bubble2.classList.remove('bubble-selected', 'bubble-error');
+                }, 500);
+            }
+
+            gameState.selectedBubble = null;
+        }
+
+        function nextLevel() {
+            audioManager.playLevelUpSound();
+            clearInterval(gameState.timer);
+            gameState.currentWordIndex += getPairCountForLevel(gameState.level);
+            gameState.level++;
+            gameState.timeLeft = getTimeForLevel(gameState.level);
+            updateLevel();
+            updateTimeLeft();
+            elements.timeProgress.style.width = '100%';
+            setTimeout(() => {
+                generateLevel();
+                startTimer();
+            }, 1000);
+        }
+
+        function clearGame() {
+            clearInterval(gameState.timer);
+            gameState.isGameOver = true;
+            gameState.isCleared = true;
+            audioManager.playClearSound();
+            elements.clearScoreDisplay.textContent = gameState.score;
+            elements.clearLevelDisplay.textContent = gameState.level;
+            elements.gameArea.classList.add('hidden');
+            elements.clearScreen.classList.remove('hidden');
+            startFireworks();
+        }
+
+        // ================================================================
+        //  计时器
+        // ================================================================
+
+        function startTimer() {
+            if (gameState.timer) clearInterval(gameState.timer);
+
+            gameState.timer = setInterval(() => {
+                if (gameState.timeLeft > 0) {
+                    gameState.timeLeft--;
+                    updateTimeLeft();
+                    const totalTime = getTimeForLevel(gameState.level);
+                    let percent = Math.min((gameState.timeLeft / totalTime) * 100, 100);
+                    elements.timeProgress.style.width = `${percent}%`;
+
+                    if (gameState.timeLeft <= Math.floor(totalTime * 0.35)) {
+                        elements.timeLeftDisplay.classList.add('text-red-500', 'animate-pulse');
+                    } else {
+                        elements.timeLeftDisplay.classList.remove('text-red-500', 'animate-pulse');
+                    }
+                } else {
+                    audioManager.playGameOverSound();
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(gameState.timer);
+            gameState.isGameOver = true;
+            elements.finalScoreDisplay.textContent = gameState.score;
+            elements.finalLevelDisplay.textContent = `已完成: 第${gameState.level}关`;
+            elements.gameArea.classList.add('hidden');
+            elements.gameOver.classList.remove('hidden');
+        }
+
+        // ================================================================
+        //  UI 更新
+        // ================================================================
+
+        function updateScore() {
+            elements.scoreDisplay.textContent = gameState.score;
+            elements.scoreDisplay.classList.add('scale-125', 'text-accent');
+            setTimeout(() => {
+                elements.scoreDisplay.classList.remove('scale-125', 'text-accent');
+            }, 300);
+        }
+
+        function updateLevel() {
+            elements.levelDisplay.textContent = gameState.level;
+            elements.levelDisplay.classList.add('scale-125', 'text-accent');
+            setTimeout(() => {
+                elements.levelDisplay.classList.remove('scale-125', 'text-accent');
+            }, 300);
+        }
+
+        function updateTimeLeft() {
+            elements.timeLeftDisplay.textContent = gameState.timeLeft;
+        }
+
+        // ================================================================
+        //  工具函数
+        // ================================================================
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createConfetti(x, y, color) {
+            const container = elements.bubbleContainer;
+            const count = 8;
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                const size = 4 + Math.random() * 6;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = color;
+                confetti.style.left = `${x}px`;
+                confetti.style.top = `${y}px`;
+                const angle = (i / count) * 360;
+                const distance = 15 + Math.random() * 15;
+                const translateX = Math.cos(angle * Math.PI / 180) * distance;
+                const translateY = Math.sin(angle * Math.PI / 180) * distance;
+                confetti.style.animation = `fadeOut 0.6s ease-out forwards`;
+                confetti.style.transform = `translate(${translateX}px, ${translateY}px)`;
+                container.appendChild(confetti);
+                setTimeout(() => {
+                    if (confetti.parentNode) confetti.parentNode.removeChild(confetti);
+                }, 600);
+            }
+        }
+
+        // ================================================================
+        //  烟花特效（完整保留）
+        // ================================================================
+
+        function startFireworks() {
+            if (gameState.fireworkInterval) return;
+            const container = document.getElementById('clear-screen');
+            const colors = ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF', '#536DFE', '#448AFF', '#40C4FF', '#18FFFF', '#64FFDA',
+                '#69F0AE', '#B2FF59', '#EEFF41', '#FFFF00', '#FFD740', '#FFAB40', '#FF6E40'
+            ];
+
+            gameState.fireworkInterval = setInterval(() => {
+                const startX = Math.random() * window.innerWidth;
+                const startY = window.innerHeight;
+                const targetX = Math.random() * window.innerWidth;
+                const targetY = Math.random() * (window.innerHeight / 2);
+                const color = colors[Math.floor(Math.random() * colors.length)];
+
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.left = `${startX}px`;
+                firework.style.top = `${startY}px`;
+                firework.style.backgroundColor = color;
+                firework.style.boxShadow = `0 0 5px ${color}`;
+                container.appendChild(firework);
+
+                let progress = 0;
+                const duration = 1000;
+                const startTime = Date.now();
+
+                const moveFirework = () => {
+                    const elapsed = Date.now() - startTime;
+                    progress = Math.min(elapsed / duration, 1);
+                    const currentX = startX + (targetX - startX) * progress;
+                    const currentY = startY + (targetY - startY) * progress * progress;
+                    firework.style.left = `${currentX}px`;
+                    firework.style.top = `${currentY}px`;
+
+                    const trail = document.createElement('div');
+                    trail.className = 'firework-trail';
+                    trail.style.left = `${currentX}px`;
+                    trail.style.top = `${currentY}px`;
+                    trail.style.backgroundColor = color;
+                    trail.style.opacity = 0.8 - progress * 0.8;
+                    container.appendChild(trail);
+                    setTimeout(() => {
+                        if (trail.parentNode) trail.parentNode.removeChild(trail);
+                    }, 200);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(moveFirework);
+                    } else {
+                        explodeFirework(targetX, targetY, color);
+                        if (firework.parentNode) firework.parentNode.removeChild(firework);
+                    }
+                };
+                moveFirework();
+            }, 300);
+        }
+
+        function explodeFirework(x, y, color) {
+            const container = document.getElementById('clear-screen');
+            const particleCount = 50;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework';
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.backgroundColor = color;
+                particle.style.boxShadow = `0 0 5px ${color}`;
+                particle.style.opacity = '1';
+                container.appendChild(particle);
+
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 4;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+
+                let progress = 0;
+                const duration = 1500;
+                const startTime = Date.now();
+
+                const animateParticle = () => {
+                    const elapsed = Date.now() - startTime;
+                    progress = Math.min(elapsed / duration, 1);
+                    const currentX = x + vx * progress * 100;
+                    const currentY = y + vy * progress * 100 - 0.5 * 0.5 * progress * progress * 200;
+                    particle.style.left = `${currentX}px`;
+                    particle.style.top = `${currentY}px`;
+                    particle.style.opacity = 1 - progress;
+                    if (progress < 1) {
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        if (particle.parentNode) particle.parentNode.removeChild(particle);
+                    }
+                };
+                animateParticle();
+            }
+        }
+
+        // ================================================================
+        //  初始化
+        // ================================================================
+
+        window.addEventListener('load', function() {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.getVoices();
+                if (speechSynthesis.getVoices().length === 0) {
+                    speechSynthesis.addEventListener('voiceschanged', function() {
+                        console.log('语音引擎加载完成');
+                    });
+                }
+            }
+            audioManager.init();
+            gameState.totalLevels = TOTAL_LEVELS;
+            if (gameState.level > gameState.totalLevels) {
+                gameState.level = 1;
+            }
+            updateLevel();
+            console.log(`📚 词库 ${totalWords} 个词条，每关词数：${levelWordCounts.join(', ')}，共 ${TOTAL_LEVELS} 关`);
+            console.log('💡 提示：从第5关起，每答对一组额外增加1秒');
+        });
+    </script>
+</body>
+</html>
