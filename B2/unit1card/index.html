@@ -163,12 +163,16 @@
             .level-btn.current {
                 @apply ring-4 ring-accent ring-opacity-50 bg-accent text-white scale-110;
             }
+            .level-btn.locked {
+                @apply bg-gray-300 text-gray-500 cursor-not-allowed opacity-60;
+                pointer-events: none;
+            }
             .pause-minimized {
                 @apply animate-minimize-pause;
             }
         }
 
-        /* ===== 卡牌动画（只做缩放，不做位移，确保在 flex 居中下正常） ===== */
+        /* ===== 卡牌动画（只做缩放，不做位移） ===== */
         @keyframes cardAppear {
             0% { transform: scale(0); opacity: 0; }
             60% { transform: scale(1.05); opacity: 1; }
@@ -324,19 +328,19 @@
                     </button>
                 </div>
 
-                <p class="text-gray-600 mb-6 text-center">点击任意关卡即可直接挑战（难度逐关递增）</p>
+                <p class="text-gray-600 mb-6 text-center">只能选择已解锁的关卡（通关前一关后自动解锁）</p>
 
                 <div id="level-list" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-3 mb-6">
                 </div>
 
                 <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4">
                     <div class="flex items-center mb-2">
-                        <div class="level-btn current mr-3">5</div>
-                        <span class="text-gray-700">当前关卡（高亮）</span>
+                        <div class="level-btn unlocked mr-3" style="pointer-events:none;">5</div>
+                        <span class="text-gray-700">已解锁（可点击）</span>
                     </div>
                     <div class="flex items-center">
-                        <div class="level-btn unlocked mr-3">3</div>
-                        <span class="text-gray-700">所有关卡均可直接点击</span>
+                        <div class="level-btn locked mr-3" style="pointer-events:none;">7</div>
+                        <span class="text-gray-700">未解锁（灰色，不可点击）</span>
                     </div>
                 </div>
 
@@ -445,10 +449,8 @@
         };
 
         // ================================================================
-        //  预置卡牌图片（使用外部图床链接，直接填入图片URL即可）
+        //  预置卡牌图片（使用外部图床链接）
         // ================================================================
-        // 支持多张图片，抽卡时随机显示；填入任意可访问的图片链接（http/https）。
-        // 若数组为空，将自动生成一张示例卡牌。
         const presetCardImages = [
 'https://ptcgp-wiki.metainnovation.site/storage/v1/object/public/public_files/system/card/zh_tw/A1/A1-096.webp',
             // 示例：'https://i.imgur.com/your-image.png',
@@ -892,7 +894,9 @@
             fireworkInterval: null,
             totalLevels: TOTAL_LEVELS,
             isLevelSelectPause: false,
-            currentWordIndex: 0
+            currentWordIndex: 0,
+            // 新增：记录已解锁的最高关卡（初始为1）
+            unlockedLevel: 1
         };
 
         // ================================================================
@@ -948,10 +952,7 @@
         //  ⏱️ 自定义关卡时间（第11关单独设为35秒）
         // ================================================================
         function getTimeForLevel(level) {
-            // 单独指定第11关为35秒
             if (level === 11) return 35;
-
-            // 其他关卡使用自动逻辑
             const total = gameState.totalLevels;
             if (total <= 5) return 30;
             if (level <= Math.ceil(total * 0.3)) return 35;
@@ -976,55 +977,55 @@
         elements.clearPlayAgain.addEventListener('click', restartGame);
         elements.clearMainMenu.addEventListener('click', quitGame);
 
-        function showLevelSelect() {
-            gameState.isLevelSelectPause = true;
-            pauseGame();
-            gameState.isLevelSelectPause = false;
-            audioManager.playSelectLevelSound();
-            elements.levelSelectScreen.classList.remove('hidden');
-            elements.levelSelectScreen.classList.remove('animate-slide-up');
-            elements.levelSelectScreen.classList.add('animate-slide-down');
-            generateLevelButtons();
-        }
-
-        function hideLevelSelect() {
-            audioManager.playClickSound();
-            elements.levelSelectScreen.classList.remove('animate-slide-down');
-            elements.levelSelectScreen.classList.add('animate-slide-up');
-            setTimeout(() => {
-                elements.levelSelectScreen.classList.add('hidden');
-                elements.levelSelectScreen.classList.remove('animate-slide-up');
-                if (!gameState.isGameOver && !gameState.isCleared) {
-                    resumeGame();
-                }
-            }, 300);
-        }
-
+        // ----- 选关按钮生成（根据解锁状态） -----
         function generateLevelButtons() {
             elements.levelList.innerHTML = '';
             for (let i = 1; i <= gameState.totalLevels; i++) {
                 const levelBtn = document.createElement('button');
+                const isUnlocked = i <= gameState.unlockedLevel;
                 const isCurrent = i === gameState.level;
-                levelBtn.className = `level-btn unlocked ${isCurrent ? 'current' : ''}`;
+
+                // 基础样式
+                levelBtn.className = `level-btn`;
+                if (isUnlocked) {
+                    levelBtn.classList.add('unlocked');
+                    if (isCurrent) levelBtn.classList.add('current');
+                } else {
+                    levelBtn.classList.add('locked');
+                }
+
                 levelBtn.textContent = i;
                 levelBtn.dataset.level = i;
-                levelBtn.addEventListener('click', function() {
-                    const level = parseInt(this.dataset.level);
-                    selectLevel(level);
-                });
-                levelBtn.addEventListener('mouseenter', function() {
-                    if (parseInt(this.dataset.level) !== gameState.level) {
-                        this.classList.add('scale-105');
-                    }
-                });
-                levelBtn.addEventListener('mouseleave', function() {
-                    this.classList.remove('scale-105');
-                });
+
+                // 只有已解锁的才绑定点击事件
+                if (isUnlocked) {
+                    levelBtn.addEventListener('click', function() {
+                        const level = parseInt(this.dataset.level);
+                        selectLevel(level);
+                    });
+                    levelBtn.addEventListener('mouseenter', function() {
+                        if (parseInt(this.dataset.level) !== gameState.level) {
+                            this.classList.add('scale-105');
+                        }
+                    });
+                    levelBtn.addEventListener('mouseleave', function() {
+                        this.classList.remove('scale-105');
+                    });
+                } else {
+                    // 未解锁的添加 title 提示
+                    levelBtn.title = '未解锁，请先通关前一关';
+                }
+
                 elements.levelList.appendChild(levelBtn);
             }
         }
 
         function selectLevel(level) {
+            // 检查是否已解锁
+            if (level > gameState.unlockedLevel) {
+                alert('该关卡尚未解锁，请先通关前面的关卡！');
+                return;
+            }
             if (level === gameState.level) {
                 hideLevelSelect();
                 return;
@@ -1035,6 +1036,9 @@
 
             if (gameState.timer) clearInterval(gameState.timer);
 
+            // 重置当前进度到所选关卡，但保留得分（可选），这里保持得分不清零，但通关后才会结算
+            // 为了公平，跳关后得分归零？（根据需求，我们让得分保留，但也可以重置，这里选择重置得分和关卡进度）
+            // 但用户希望逐关完成，跳关可能影响成就，我们保持得分清零，从新关卡开始。
             gameState.score = 0;
             gameState.level = level;
             gameState.timeLeft = getTimeForLevel(level);
@@ -1068,6 +1072,30 @@
             elements.pauseScreen.classList.add('hidden');
         }
 
+        function showLevelSelect() {
+            gameState.isLevelSelectPause = true;
+            pauseGame();
+            gameState.isLevelSelectPause = false;
+            audioManager.playSelectLevelSound();
+            elements.levelSelectScreen.classList.remove('hidden');
+            elements.levelSelectScreen.classList.remove('animate-slide-up');
+            elements.levelSelectScreen.classList.add('animate-slide-down');
+            generateLevelButtons(); // 每次打开刷新状态
+        }
+
+        function hideLevelSelect() {
+            audioManager.playClickSound();
+            elements.levelSelectScreen.classList.remove('animate-slide-down');
+            elements.levelSelectScreen.classList.add('animate-slide-up');
+            setTimeout(() => {
+                elements.levelSelectScreen.classList.add('hidden');
+                elements.levelSelectScreen.classList.remove('animate-slide-up');
+                if (!gameState.isGameOver && !gameState.isCleared) {
+                    resumeGame();
+                }
+            }, 300);
+        }
+
         function startGame() {
             audioManager.init();
             elements.startScreen.classList.add('hidden');
@@ -1091,6 +1119,8 @@
             gameState.isLevelSelectPause = false;
             gameState.previousWords = { all: [] };
             gameState.currentWordIndex = getStartIndexForLevel(1);
+            // 重置解锁状态
+            gameState.unlockedLevel = 1;
 
             if (gameState.fireworkInterval) {
                 clearInterval(gameState.fireworkInterval);
@@ -1393,6 +1423,13 @@
         function nextLevel() {
             audioManager.playLevelUpSound();
             clearInterval(gameState.timer);
+
+            // 更新解锁状态：解锁下一关（当前关+1）
+            const nextLevel = gameState.level + 1;
+            if (nextLevel <= gameState.totalLevels) {
+                gameState.unlockedLevel = Math.max(gameState.unlockedLevel, nextLevel);
+            }
+
             gameState.currentWordIndex += getPairCountForLevel(gameState.level);
             gameState.level++;
             gameState.timeLeft = getTimeForLevel(gameState.level);
@@ -1420,21 +1457,20 @@
             elements.clearScreen.classList.remove('hidden');
             startFireworks();
 
-            // 100% 概率触发稀有卡牌特效（可调整 0.3 改为其他值）
-            if (Math.random() < 1) {
+            // 30% 概率触发稀有卡牌特效
+            if (Math.random() < 0.3) {
                 showRareCard();
             }
         }
 
         // ----- 显示卡牌浮层（带关闭按钮，宽400px高550px，居中） -----
         function showRareCard() {
-            // 选择图片：优先使用预设数组，若无则生成示例卡牌
             let cardImage;
             if (presetCardImages.length > 0) {
                 const idx = Math.floor(Math.random() * presetCardImages.length);
                 cardImage = presetCardImages[idx];
             } else {
-                // 生成一个简单的示例卡牌（带星星和文字）
+                // 生成示例卡牌
                 const canvas = document.createElement('canvas');
                 canvas.width = 300;
                 canvas.height = 420;
@@ -1473,7 +1509,6 @@
                 cardImage = canvas.toDataURL('image/png');
             }
 
-            // 创建浮层容器（使用 flex 居中，确保卡牌在画面正中央）
             const overlay = document.createElement('div');
             overlay.id = 'rare-card-overlay';
             overlay.style.cssText = `
@@ -1491,7 +1526,6 @@
                 backdrop-filter: blur(4px);
             `;
 
-            // 卡牌容器（仅缩放动画，无位移，保证在 flex 下居中）
             const cardWrapper = document.createElement('div');
             cardWrapper.style.cssText = `
                 animation: cardAppear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -1500,7 +1534,6 @@
                 height: 550px;
             `;
 
-            // 卡牌样式（金色边框）
             cardWrapper.innerHTML = `
                 <div style="
                     width: 100%;
@@ -1523,7 +1556,6 @@
                         box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
                     "></div>
                 </div>
-                <!-- 关闭按钮 -->
                 <button id="close-card-btn" style="
                     position: absolute;
                     top: -20px;
@@ -1549,12 +1581,10 @@
             overlay.appendChild(cardWrapper);
             document.body.appendChild(overlay);
 
-            // 关闭按钮事件
             document.getElementById('close-card-btn').addEventListener('click', function() {
                 overlay.remove();
             });
 
-            // 点击背景也可关闭
             overlay.addEventListener('click', function(e) {
                 if (e.target === overlay) {
                     overlay.remove();
@@ -1660,7 +1690,7 @@
         }
 
         // ================================================================
-        //  烟花特效（完整保留）
+        //  烟花特效
         // ================================================================
 
         function startFireworks() {
@@ -1777,12 +1807,13 @@
             if (gameState.level > gameState.totalLevels) {
                 gameState.level = 1;
             }
+            // 初始解锁第1关
+            gameState.unlockedLevel = 1;
             updateLevel();
             console.log(`📚 词库 ${totalWords} 个词条，每关词数：${levelWordCounts.join(', ')}，共 ${TOTAL_LEVELS} 关`);
             console.log('💡 提示：从第5关起，每答对一组额外增加1秒');
             console.log('🎴 第11关单独设为 35 秒，通关后有 30% 概率触发卡牌特效');
-            console.log('🖼️ 卡牌尺寸：400px × 550px，居中显示（使用外部图床链接）');
-            console.log('📌 请在 presetCardImages 数组中填入你的图片URL');
+            console.log('🔒 选关限制：只能选择已解锁的关卡（逐关解锁）');
         });
     </script>
 </body>
